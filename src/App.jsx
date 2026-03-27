@@ -25,6 +25,15 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [isLoading, setIsLoading] = useState(false);
   const streamActiveRef = useRef(false);
+  window.currentAIAudio = window.currentAIAudio || null;
+  window.stopAIVoice = () => {
+     if (window.currentAIAudio) {
+        window.currentAIAudio.pause();
+        window.currentAIAudio.currentTime = 0;
+        window.currentAIAudio = null;
+     }
+     window.speechSynthesis.cancel();
+  };
 
   const [user, setUser] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
@@ -252,7 +261,7 @@ function App() {
 
     let completeResponse = '';
     try {
-      await generateAIStream(content, attachedImage, (currentText) => {
+      await generateAIStream(content, attachedImage, isAIVoiceMode, (currentText) => {
         completeResponse = currentText;
         setIsLoading(false);
         setChats(prev => prev.map(chat => {
@@ -276,20 +285,26 @@ function App() {
       
       if (isAIVoiceMode && completeResponse) {
          try {
-           const cleanText = completeResponse.replace(/[*#`_\n]/g, ' ').trim();
-           const utterance = new SpeechSynthesisUtterance(cleanText);
-           utterance.lang = 'es-MX';
+           const cleanText = completeResponse.replace(/[*#`_\n]/g, ' ').trim().substring(0, 450); // limit chars for TTS API
            
-           utterance.onend = () => {
+           window.stopAIVoice(); // halt prior audio
+           const ttsUrl = `https://api.streamelements.com/kappa/v2/speech?voice=Mia&text=${encodeURIComponent(cleanText)}`;
+           window.currentAIAudio = new Audio(ttsUrl);
+           
+           window.currentAIAudio.onended = () => {
              window.dispatchEvent(new Event('aiSpeechFinished'));
            };
-           utterance.onerror = () => {
+           window.currentAIAudio.onerror = () => {
+             console.error("TTS Audio Failed");
              window.dispatchEvent(new Event('aiSpeechFinished'));
            };
 
-           window.speechSynthesis.speak(utterance);
+           window.currentAIAudio.play().catch(e => {
+             console.error("Audio playback blocked:", e);
+             window.dispatchEvent(new Event('aiSpeechFinished'));
+           });
          } catch (e) {
-           console.error("SpeechSynthesis Failed:", e);
+           console.error("TTS Pipeline Failed:", e);
            window.dispatchEvent(new Event('aiSpeechFinished'));
          }
       }

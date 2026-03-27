@@ -1,4 +1,4 @@
-export const generateAIStream = async (prompt, onUpdate) => {
+export const generateAIStream = async (prompt, image, isVoiceMode, onUpdate) => {
   try {
     // Connect to the proxy securely.
     const response = await fetch('/api/chat', {
@@ -6,7 +6,7 @@ export const generateAIStream = async (prompt, onUpdate) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, image, isVoiceMode }),
     });
 
     if (!response.ok) {

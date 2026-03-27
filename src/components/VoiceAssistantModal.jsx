@@ -74,6 +74,14 @@ const VoiceAssistantModal = ({ isOpen, onClose, onSendMessage, isLoading }) => {
      }
   }, [isOpen]);
 
+  useEffect(() => {
+     if (!isOpen) {
+        if (typeof window.stopAIVoice === 'function') {
+           window.stopAIVoice();
+        }
+     }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (
@@ -81,8 +89,11 @@ const VoiceAssistantModal = ({ isOpen, onClose, onSendMessage, isLoading }) => {
        {/* Top Bar */}
        <div className="w-full flex justify-end">
           <button 
-             onClick={() => { window.speechSynthesis.cancel(); onClose(); }} 
-             className="bg-[#2F2F2F] text-[#ECECEC] p-3 rounded-full hover:bg-[#444] hover:text-white transition-colors cursor-pointer"
+             onClick={() => { 
+                if (typeof window.stopAIVoice === 'function') window.stopAIVoice(); 
+                onClose(); 
+             }} 
+             className="bg-[#2F2F2F] text-[#ECECEC] p-3 rounded-full hover:bg-[#444] hover:text-white transition-colors cursor-pointer relative z-[2000]"
           >
             <X size={24} />
           </button>
