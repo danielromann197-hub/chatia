@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, PanelLeftClose, Trash2, LogOut, MoreHorizontal, Share, Users, Edit2, Pin, PinOff, Archive, Image as ImageIcon, Search, Folder, Sparkles, Wand2, HelpCircle, Edit3, Plus, Settings } from 'lucide-react';
 import { logout } from '../firebase';
 
-const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat, onRenameChat, onTogglePinChat, onToggleArchiveChat, onShowImageGallery, onShowArchivedChats, user, onShowLogin, onShowSettings }) => {
+const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat, onRenameChat, onTogglePinChat, onToggleArchiveChat, onShowImageGallery, onShowArchivedChats, user, onShowLogin, onShowSettings, onShowUpgradePlan }) => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [editingChatId, setEditingChatId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
@@ -202,7 +202,7 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
                   <button className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
                      <Plus size={16} className="text-[#A0A0A0]"/> Agregar otra cuenta
                   </button>
-                  <button className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
+                  <button onClick={(e) => enforceAuth(e, () => { setShowProfileMenu(false); onShowUpgradePlan(); })} className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
                      <Sparkles size={16} className="text-[#A0A0A0]"/> Mejorar el plan
                   </button>
                   <button className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
@@ -243,7 +243,10 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
                  </div>
                  
                  <div className="flex items-center gap-2 px-1">
-                   <span className="px-2 py-1 bg-[#2F2F2F] text-[10px] text-[#ECECEC] rounded-full font-poppins font-medium whitespace-nowrap hidden lg:block group-hover:bg-[#3F3F3F] transition-colors border border-[#444]">
+                   <span 
+                     onClick={(e) => enforceAuth(e, onShowUpgradePlan)}
+                     className="px-2 py-1 bg-[#2F2F2F] text-[10px] text-[#ECECEC] rounded-full font-poppins font-medium whitespace-nowrap hidden lg:block group-hover:bg-[#3F3F3F] transition-colors border border-[#444]"
+                   >
                      Mejorar el plan
                    </span>
                  </div>
