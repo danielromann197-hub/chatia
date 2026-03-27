@@ -95,7 +95,7 @@ function App() {
           
           // Force an immediate cloud save if we just migrated guest chats over
           if (guestActiveChats.length > 0) {
-            const updatePromise = setDoc(doc(db, 'users', currentUser.uid), { chats: mergedChats });
+            const updatePromise = setDoc(doc(db, 'users', currentUser.uid), { chats: mergedChats }, { merge: true });
             if (updatePromise && updatePromise.catch) updatePromise.catch(e => console.error(e));
           }
         } catch (error) {
@@ -125,7 +125,7 @@ function App() {
     if (user && chats.length > 0 && !isAuthChecking) {
       localStorage.setItem(`c7_chatHistory_${user.uid}`, JSON.stringify(chats));
       // Sync strictly valid states to Firestore
-      setDoc(doc(db, 'users', user.uid), { chats }).catch(err => console.error("Error saving to cloud:", err));
+      setDoc(doc(db, 'users', user.uid), { chats }, { merge: true }).catch(err => console.error("Error saving to cloud:", err));
     }
   }, [chats, user, isAuthChecking]);
 
