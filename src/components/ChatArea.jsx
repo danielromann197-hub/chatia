@@ -1,10 +1,10 @@
 import React, { useRef, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import EmptyState from './EmptyState';
 import MessageBubble from './MessageBubble';
 import ChatInput from './ChatInput';
 
-const ChatArea = ({ isSidebarOpen, setIsSidebarOpen, messages, isLoading, onSendMessage, isAIVoiceMode, setIsAIVoiceMode }) => {
+const ChatArea = ({ isSidebarOpen, setIsSidebarOpen, messages, isLoading, onSendMessage }) => {
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -45,23 +45,6 @@ const ChatArea = ({ isSidebarOpen, setIsSidebarOpen, messages, isLoading, onSend
         <div className="w-full flex flex-col pt-12 md:pt-14 pb-4 min-h-full justify-between items-center">
           
           <div className="w-full flex-1 flex flex-col items-center">
-            {isAIVoiceMode && (
-              <div className="w-full justify-center px-4 md:px-0 py-2 top-0 z-[100]">
-                <div className="mx-auto w-full max-w-3xl bg-[#2F2F2F] border border-[#444] rounded-2xl p-4 flex items-start justify-between shadow-lg mb-2">
-                   <div className="flex gap-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#2b8aff] to-[#10a37f] shrink-0 mt-0.5 relative overflow-hidden">
-                         <div className="absolute inset-0 bg-white/20 blur-sm animate-pulse"></div>
-                      </div>
-                      <div className="flex flex-col">
-                         <span className="text-[#ECECEC] font-semibold text-[15px] mb-1">El modo de voz ahora está integrado en el chat</span>
-                         <span className="text-[#A0A0A0] text-[13px] leading-relaxed">Sigue la conversación en tiempo real con transcripciones y elementos visuales. Puedes volver en cualquier momento desactivando el modo.</span>
-                      </div>
-                   </div>
-                   <button onClick={() => setIsAIVoiceMode(false)} className="text-[#A0A0A0] hover:text-white shrink-0 cursor-pointer"><X size={18}/></button>
-                </div>
-              </div>
-            )}
-
             {messages.length === 0 ? (
                 <EmptyState />
             ) : (

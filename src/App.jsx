@@ -8,6 +8,7 @@ import SettingsModal from './components/SettingsModal';
 import OnboardingModal from './components/OnboardingModal';
 import UpgradePlanModal from './components/UpgradePlanModal';
 import SearchChatsModal from './components/SearchChatsModal';
+import VoiceAssistantModal from './components/VoiceAssistantModal';
 import { generateAIStream } from './gemini';
 import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -278,9 +279,18 @@ function App() {
            const cleanText = completeResponse.replace(/[*#`_\n]/g, ' ').trim();
            const utterance = new SpeechSynthesisUtterance(cleanText);
            utterance.lang = 'es-MX';
+           
+           utterance.onend = () => {
+             window.dispatchEvent(new Event('aiSpeechFinished'));
+           };
+           utterance.onerror = () => {
+             window.dispatchEvent(new Event('aiSpeechFinished'));
+           };
+
            window.speechSynthesis.speak(utterance);
          } catch (e) {
            console.error("SpeechSynthesis Failed:", e);
+           window.dispatchEvent(new Event('aiSpeechFinished'));
          }
       }
     }
@@ -312,6 +322,12 @@ function App() {
         onClose={() => setShowSettings(false)} 
         user={user} 
         onClearAllChats={handleClearAllChats} 
+      />
+      <VoiceAssistantModal 
+        isOpen={isAIVoiceMode} 
+        onClose={() => setIsAIVoiceMode(false)}
+        onSendMessage={handleSendMessage}
+        isLoading={isLoading}
       />
       <UpgradePlanModal 
         isOpen={showUpgradePlan} 
