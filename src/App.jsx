@@ -3,8 +3,9 @@ import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import LoginModal from './components/LoginModal';
 import { generateAIStream } from './gemini';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
@@ -24,41 +25,53 @@ function App() {
 
   // Authentication Listener & Persistence Router
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      setIsAuthChecking(false);
 
       if (currentUser) {
-        // Logged In User: Load their specific local database
-        const saved = localStorage.getItem(`c7_chatHistory_${currentUser.uid}`);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            setChats(parsed);
-            setCurrentChatId(parsed[0].id);
-          } catch (e) {
-            setChats(getEmptyChat());
-            setCurrentChatId(getEmptyChat()[0].id);
+        // Load from Firestore first
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists() && userDoc.data().chats) {
+            const cloudChats = userDoc.data().chats;
+            setChats(cloudChats);
+            setCurrentChatId(cloudChats[0].id);
+            localStorage.setItem(`c7_chatHistory_${currentUser.uid}`, JSON.stringify(cloudChats));
+          } else {
+            // Fallback to localStorage migration or empty
+            const saved = localStorage.getItem(`c7_chatHistory_${currentUser.uid}`);
+            const defaultChats = saved ? JSON.parse(saved) : getEmptyChat();
+            setChats(defaultChats);
+            setCurrentChatId(defaultChats[0].id);
+            await setDoc(doc(db, 'users', currentUser.uid), { chats: defaultChats });
           }
-        } else {
-           setChats(getEmptyChat());
-           setCurrentChatId(getEmptyChat()[0].id);
+        } catch (error) {
+           console.error("Error loading chats from Firestore:", error);
+           const saved = localStorage.getItem(`c7_chatHistory_${currentUser.uid}`);
+           if (saved) {
+             const parsed = JSON.parse(saved);
+             setChats(parsed);
+             setCurrentChatId(parsed[0].id);
+           }
         }
       } else {
-        // Unregistered/Guest User: Start fresh (Volatile RAM memory only)
+        // Unregistered/Guest User: Start fresh
         setChats(getEmptyChat());
         setCurrentChatId(getEmptyChat()[0].id);
       }
+      setIsAuthChecking(false);
     });
     return () => unsubscribe();
   }, []);
 
-  // Save to LocalStorage specifically attached to the verified user
+  // Sync to Cloud and LocalStorage
   useEffect(() => {
-    if (user && chats.length > 0) {
+    if (user && chats.length > 0 && !isAuthChecking) {
       localStorage.setItem(`c7_chatHistory_${user.uid}`, JSON.stringify(chats));
+      // Sync strictly valid states to Firestore
+      setDoc(doc(db, 'users', user.uid), { chats }).catch(err => console.error("Error saving to cloud:", err));
     }
-  }, [chats, user]);
+  }, [chats, user, isAuthChecking]);
 
   const handleNewChat = () => {
     const newChat = { id: Date.now(), title: 'Nuevo chat', messages: [], createdAt: Date.now() };
@@ -158,20 +171,20 @@ function App() {
 
   // Hide the entire UI if Firebase is initializing
   if (isAuthChecking) {
-    return <div className="h-screen w-screen bg-[#212121] flex justify-center items-center"><div className="w-6 h-6 border-2 border-[#FFD000] border-t-transparent animate-spin rounded-full"></div></div>;
+    return <div className="h-[100dvh] w-screen bg-[#212121] flex justify-center items-center"><div className="w-6 h-6 border-2 border-[#FFD000] border-t-transparent animate-spin rounded-full"></div></div>;
   }
 
   // Full-screen login page when accessed
   if (showLogin) {
     return (
-      <div className="flex bg-[#212121] h-screen font-poppins text-white overflow-hidden selection:bg-[#FFD000] selection:text-black">
+      <div className="flex bg-[#212121] h-[100dvh] font-poppins text-white overflow-hidden selection:bg-[#FFD000] selection:text-black">
         <LoginModal onClose={() => setShowLogin(false)} />
       </div>
     );
   }
 
   return (
-    <div className="flex bg-[#212121] h-screen font-poppins text-white overflow-hidden selection:bg-[#FFD000] selection:text-black">
+    <div className="flex bg-[#212121] h-[100dvh] font-poppins text-white overflow-hidden selection:bg-[#FFD000] selection:text-black">
       <Sidebar 
         isOpen={isSidebarOpen} 
         setIsOpen={setIsSidebarOpen} 
