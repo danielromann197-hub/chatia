@@ -128,6 +128,13 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
   };
 
   const fireVoiceMode = () => {
+     if (!window.currentAIAudio) {
+        window.currentAIAudio = new Audio();
+     }
+     // Play silent 0.1s base64 wav to unlock audio context on Chrome/Safari
+     window.currentAIAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+     window.currentAIAudio.play().catch(e => console.log("Audio unlock:", e));
+     
      window.dispatchEvent(new Event('toggleAIVoiceMode'));
   };
 
