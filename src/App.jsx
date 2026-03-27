@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import LoginModal from './components/LoginModal';
+import ImageGalleryModal from './components/ImageGalleryModal';
+import ArchivedChatsModal from './components/ArchivedChatsModal';
 import { generateAIStream } from './gemini';
 import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -16,6 +18,8 @@ function App() {
   const [user, setUser] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [showArchivedChats, setShowArchivedChats] = useState(false);
 
   // Base state generator
   const getEmptyChat = () => [{ id: Date.now(), title: 'Nuevo chat', messages: [], createdAt: Date.now() }];
@@ -121,9 +125,35 @@ function App() {
     });
 
     if (currentChatId === id) {
-      const remaining = chats.filter(c => c.id !== id);
+      const remaining = chats.filter(c => c.id !== id && !c.archived);
       if (remaining.length > 0) {
         setCurrentChatId(remaining[0].id);
+      } else {
+        const fallback = getEmptyChat()[0];
+        setChats(prev => [fallback, ...prev]);
+        setCurrentChatId(fallback.id);
+      }
+    }
+  };
+
+  const handleRenameChat = (id, newTitle) => {
+    setChats(prev => prev.map(c => (c.id === id ? { ...c, title: newTitle } : c)));
+  };
+
+  const handleTogglePinChat = (id) => {
+    setChats(prev => prev.map(c => (c.id === id ? { ...c, pinned: !c.pinned } : c)));
+  };
+
+  const handleToggleArchiveChat = (id) => {
+    setChats(prev => prev.map(c => (c.id === id ? { ...c, archived: !c.archived } : c)));
+    if (currentChatId === id) {
+      const activeChats = chats.filter(c => c.id !== id && !c.archived);
+      if (activeChats.length > 0) {
+        setCurrentChatId(activeChats[0].id);
+      } else {
+        const fallback = getEmptyChat()[0];
+        setChats(prev => [fallback, ...prev]);
+        setCurrentChatId(fallback.id);
       }
     }
   };
@@ -204,6 +234,18 @@ function App() {
 
   return (
     <div className="flex bg-[#212121] h-[100dvh] font-poppins text-white overflow-hidden selection:bg-[#FFD000] selection:text-black">
+      <ImageGalleryModal 
+        isOpen={showImageGallery} 
+        onClose={() => setShowImageGallery(false)} 
+        chats={chats} 
+      />
+      <ArchivedChatsModal 
+        isOpen={showArchivedChats} 
+        onClose={() => setShowArchivedChats(false)} 
+        chats={chats} 
+        onUnarchive={handleToggleArchiveChat}
+        onDelete={handleDeleteChat}
+      />
       <Sidebar 
         isOpen={isSidebarOpen} 
         setIsOpen={setIsSidebarOpen} 
@@ -212,6 +254,11 @@ function App() {
         onSelectChat={handleSelectChat}
         onNewChat={handleNewChat}
         onDeleteChat={handleDeleteChat}
+        onRenameChat={handleRenameChat}
+        onTogglePinChat={handleTogglePinChat}
+        onToggleArchiveChat={handleToggleArchiveChat}
+        onShowImageGallery={() => setShowImageGallery(true)}
+        onShowArchivedChats={() => setShowArchivedChats(true)}
         user={user}
         onShowLogin={() => setShowLogin(true)}
       />
