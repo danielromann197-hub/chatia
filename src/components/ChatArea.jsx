@@ -42,7 +42,7 @@ const ChatArea = ({ isSidebarOpen, setIsSidebarOpen, messages, isLoading, onSend
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto w-full scrollbar-hide flex flex-col items-center">
-        <div className="w-full flex flex-col pt-12 md:pt-14 pb-4 min-h-full justify-between items-center">
+        <div className="w-full flex flex-col pt-16 md:pt-14 pb-4 min-h-full justify-between items-center">
           
           <div className="w-full flex-1 flex flex-col items-center">
             {messages.length === 0 ? (

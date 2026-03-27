@@ -233,18 +233,19 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
                )}
             </div>
 
-            <textarea
-               ref={textareaRef}
-               value={message}
-               onChange={(e) => setMessage(e.target.value)}
-               onKeyDown={handleKeyDown}
-               placeholder="Pregunta lo que quieras"
-               className="flex-1 bg-transparent text-[#ECECEC] placeholder-[#A0A0A0] focus:outline-none resize-none px-3 py-3.5 font-poppins text-[15px] scrollbar-hide align-middle self-center pt-3"
-               rows={1}
-               style={{ maxHeight: '200px' }}
-               disabled={isLoading}
-            />
-
+              <textarea 
+                ref={textareaRef}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Pregúntale a C7 Studio" 
+                className="flex-1 bg-transparent text-[#ECECEC] placeholder-[#A0A0A0] focus:outline-none resize-none px-3 py-3.5 font-poppins text-[16px] scrollbar-hide align-middle self-center pt-3 leading-[1.6]"
+                rows={1}
+                disabled={isLoading}
+                style={{
+                   maxHeight: '200px'
+                }}
+              />
             {/* Right side dynamic actions */}
             <div className="flex items-center gap-1.5 flex-shrink-0 pr-1 pb-1">
               {!message.trim() && !selectedImage && !isLoading ? (

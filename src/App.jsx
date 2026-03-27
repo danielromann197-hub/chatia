@@ -108,9 +108,11 @@ function App() {
             mergedChats = [...newGuestChats, ...cloudChats];
           }
 
-          if (!Array.isArray(mergedChats) || mergedChats.length === 0) {
-             mergedChats = getEmptyChat();
-          }
+          // Remove all previous completely empty chats to prevent history bloat
+          mergedChats = mergedChats.filter(c => c.messages && c.messages.length > 0);
+
+          // Force New Chat on Top
+          mergedChats.unshift(getEmptyChat()[0]);
 
           setChats(mergedChats);
           setCurrentChatId(mergedChats[0].id);
@@ -125,7 +127,10 @@ function App() {
            console.error("Error loading chats from Firestore:", error);
            const saved = localStorage.getItem(`c7_chatHistory_${currentUser.uid}`);
            let parsed = saved && saved !== "null" ? JSON.parse(saved) : null;
-           if (!Array.isArray(parsed) || parsed.length === 0) parsed = getEmptyChat();
+           if (!Array.isArray(parsed)) parsed = [];
+           parsed = parsed.filter(c => c.messages && c.messages.length > 0);
+           parsed.unshift(getEmptyChat()[0]);
+           
            setChats(parsed);
            setCurrentChatId(parsed[0].id);
         }
