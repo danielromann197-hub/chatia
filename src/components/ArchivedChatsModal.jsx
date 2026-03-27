@@ -2,7 +2,8 @@ import React from 'react';
 import { X, MessageSquare, RefreshCcw, Trash2 } from 'lucide-react';
 
 const ArchivedChatsModal = ({ isOpen, onClose, chats, onUnarchive, onDelete }) => {
-  const archivedChats = chats.filter(c => c.archived);
+  const safeChats = Array.isArray(chats) ? chats : [];
+  const archivedChats = safeChats.filter(c => c && c.archived);
 
   if (!isOpen) return null;
 

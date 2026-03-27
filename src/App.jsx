@@ -46,10 +46,13 @@ function App() {
             cloudChats = userDoc.data().chats;
           } else {
             const saved = localStorage.getItem(`c7_chatHistory_${currentUser.uid}`);
-            cloudChats = saved ? JSON.parse(saved) : [];
+            cloudChats = saved && saved !== "null" ? JSON.parse(saved) : [];
           }
 
-          const guestActiveChats = chatsRef.current.filter(c => c.messages.length > 0);
+          if (!Array.isArray(cloudChats)) cloudChats = [];
+
+          const safeRefChats = Array.isArray(chatsRef.current) ? chatsRef.current : [];
+          const guestActiveChats = safeRefChats.filter(c => c && Array.isArray(c.messages) && c.messages.length > 0);
           let mergedChats = [];
 
           if (cloudChats.length === 0) {
@@ -60,22 +63,26 @@ function App() {
             mergedChats = [...newGuestChats, ...cloudChats];
           }
 
+          if (!Array.isArray(mergedChats) || mergedChats.length === 0) {
+             mergedChats = getEmptyChat();
+          }
+
           setChats(mergedChats);
           setCurrentChatId(mergedChats[0].id);
           localStorage.setItem(`c7_chatHistory_${currentUser.uid}`, JSON.stringify(mergedChats));
           
           // Force an immediate cloud save if we just migrated guest chats over
           if (guestActiveChats.length > 0) {
-            await setDoc(doc(db, 'users', currentUser.uid), { chats: mergedChats }).catch(e => console.error(e));
+            const updatePromise = setDoc(doc(db, 'users', currentUser.uid), { chats: mergedChats });
+            if (updatePromise && updatePromise.catch) updatePromise.catch(e => console.error(e));
           }
         } catch (error) {
            console.error("Error loading chats from Firestore:", error);
            const saved = localStorage.getItem(`c7_chatHistory_${currentUser.uid}`);
-           if (saved) {
-             const parsed = JSON.parse(saved);
-             setChats(parsed);
-             setCurrentChatId(parsed[0].id);
-           }
+           let parsed = saved && saved !== "null" ? JSON.parse(saved) : null;
+           if (!Array.isArray(parsed) || parsed.length === 0) parsed = getEmptyChat();
+           setChats(parsed);
+           setCurrentChatId(parsed[0].id);
         }
       } else {
         // Unregistered/Guest User: Start fresh

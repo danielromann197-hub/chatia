@@ -7,17 +7,19 @@ const ImageGalleryModal = ({ isOpen, onClose, chats }) => {
     const extracted = [];
     const regex = /!\[.*?\]\((.*?)\)/g;
 
-    chats.forEach(chat => {
-      chat.messages.forEach(msg => {
-        if (msg.role === 'ai' && typeof msg.content === 'string') {
+    const safeChats = Array.isArray(chats) ? chats : [];
+    safeChats.forEach(chat => {
+      const safeMsgs = Array.isArray(chat?.messages) ? chat.messages : [];
+      safeMsgs.forEach(msg => {
+        if (msg && msg.role === 'ai' && typeof msg.content === 'string') {
           let match;
           while ((match = regex.exec(msg.content)) !== null) {
              const url = match[1];
              if (url && (url.startsWith('http') || url.startsWith('/api/image'))) {
                 extracted.push({
                    url,
-                   chatTitle: chat.title,
-                   date: chat.createdAt
+                   chatTitle: chat.title || 'Chat',
+                   date: chat.createdAt || Date.now()
                 });
              }
           }

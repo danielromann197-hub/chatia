@@ -18,7 +18,8 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const activeChats = chats.filter(c => !c.archived);
+  const safeChats = Array.isArray(chats) ? chats : [];
+  const activeChats = safeChats.filter(c => c && !c.archived);
   const pinnedChats = activeChats.filter(c => c.pinned);
   const recentChats = activeChats.filter(c => !c.pinned);
 
