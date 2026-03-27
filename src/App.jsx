@@ -7,6 +7,7 @@ import ArchivedChatsModal from './components/ArchivedChatsModal';
 import SettingsModal from './components/SettingsModal';
 import OnboardingModal from './components/OnboardingModal';
 import UpgradePlanModal from './components/UpgradePlanModal';
+import SearchChatsModal from './components/SearchChatsModal';
 import { generateAIStream } from './gemini';
 import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -32,6 +33,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUpgradePlan, setShowUpgradePlan] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   // Base state generator
   const getEmptyChat = () => [{ id: Date.now(), title: 'Nuevo chat', messages: [], createdAt: Date.now() }];
@@ -293,6 +295,12 @@ function App() {
         isOpen={showUpgradePlan} 
         onClose={() => setShowUpgradePlan(false)} 
       />
+      <SearchChatsModal
+        isOpen={showSearch}
+        onClose={() => setShowSearch(false)}
+        chats={chats}
+        onSelectChat={(id) => { handleSelectChat(id); setShowSearch(false); }}
+      />
       <ImageGalleryModal 
         isOpen={showImageGallery} 
         onClose={() => setShowImageGallery(false)} 
@@ -322,6 +330,7 @@ function App() {
         onShowLogin={() => setShowLogin(true)}
         onShowSettings={() => setShowSettings(true)}
         onShowUpgradePlan={() => setShowUpgradePlan(true)}
+        onShowSearch={() => setShowSearch(true)}
       />
       <div className="flex-1 flex flex-col relative w-full h-full bg-[#212121]">
         <ChatArea 

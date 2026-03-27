@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, PanelLeftClose, Trash2, LogOut, MoreHorizontal, Share, Users, Edit2, Pin, PinOff, Archive, Image as ImageIcon, Search, Folder, Sparkles, Wand2, HelpCircle, Edit3, Plus, Settings } from 'lucide-react';
 import { logout } from '../firebase';
 
-const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat, onRenameChat, onTogglePinChat, onToggleArchiveChat, onShowImageGallery, onShowArchivedChats, user, onShowLogin, onShowSettings, onShowUpgradePlan }) => {
+const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat, onRenameChat, onTogglePinChat, onToggleArchiveChat, onShowImageGallery, onShowArchivedChats, user, onShowLogin, onShowSettings, onShowUpgradePlan, onShowSearch }) => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [editingChatId, setEditingChatId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
@@ -160,7 +160,7 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
             <Edit3 size={18} className="text-[#ECECEC]" /> 
             <span className="text-[14px] font-poppins">Nuevo chat</span>
           </button>
-          <button onClick={(e) => enforceAuth(e, () => alert('Buscador de chats próximo a integrarse'))} className="w-full text-left px-3 py-2 rounded-lg text-[#ECECEC] hover:bg-[#202123] flex items-center gap-3 transition-colors">
+          <button onClick={(e) => enforceAuth(e, onShowSearch)} className="w-full text-left px-3 py-2 rounded-lg text-[#ECECEC] hover:bg-[#202123] flex items-center gap-3 transition-colors">
             <Search size={18} className="text-[#ECECEC]" /> 
             <span className="text-[14px] font-poppins">Buscar chats</span>
           </button>
@@ -185,7 +185,7 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
           {user ? (
             <>
               {showProfileMenu && (
-                <div className="absolute bottom-[calc(100%)] left-3 w-[calc(100%-24px)] mb-1 bg-[#2F2F2F] border border-[#444] rounded-2xl shadow-2xl py-2 z-[100] animate-fade-in-up flex flex-col">
+                <div className="absolute bottom-[calc(100%)] left-3 w-[calc(100%-24px)] mb-1 bg-[#2F2F2F] border border-[#444] rounded-2xl shadow-2xl py-2 z-[100] flex flex-col">
                   
                   <div className="px-3 py-2 flex items-center gap-3">
                      <div className="w-8 h-8 rounded-full bg-[#1A1A1A] border border-[#444] flex items-center justify-center flex-shrink-0 font-medium text-xs text-[#ECECEC] uppercase">
@@ -226,9 +226,10 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
                 </div>
               )}
               
-              <div 
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="flex items-center justify-between w-full p-2 hover:bg-[#202123] rounded-lg transition-colors cursor-pointer group"
+              <button 
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowProfileMenu(prev => !prev); }}
+                className="flex items-center justify-between w-full p-2 hover:bg-[#202123] rounded-lg transition-colors cursor-pointer group text-left border-none outline-none"
               >
                  <div className="flex items-center gap-2 overflow-hidden">
                     <img 
