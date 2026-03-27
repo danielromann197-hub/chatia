@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Calle 7 Chat</string>
+    <string name="title_activity_main">Calle 7 Chat</string>
+    <string name="package_name">com.calle7studio.chatia</string>
+    <string name="custom_url_scheme">com.calle7studio.chatia</string>
+</resources>
