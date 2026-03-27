@@ -82,7 +82,7 @@ app.post('/api/chat', async (req, res) => {
     res.end();
   } catch (error) {
     console.error('Error generating AI response:', error);
-    res.write(`data: ${JSON.stringify({ error: 'Failed to generate response' })}\n\n`);
+    res.write(`data: ${JSON.stringify({ error: `Error de Gemini: ${error.message}` })}\n\n`);
     res.write('data: [DONE]\n\n');
     res.end();
   }
