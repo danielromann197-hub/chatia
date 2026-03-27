@@ -44,9 +44,11 @@ const LoginModal = ({ onClose }) => {
     <div className="fixed inset-0 bg-[#212121] z-[100] flex items-center justify-center p-4 animate-fade-in-up">
       <div className="bg-[#171717] w-full max-w-md rounded-2xl p-8 border border-[#333] shadow-2xl relative">
         <button onClick={onClose} className="absolute top-4 right-5 text-[#8E8E8E] hover:text-white text-xl pb-2">✕</button>
-        <h2 className="font-anton text-3xl text-white mb-6 uppercase tracking-wide text-center flex justify-center items-center gap-2">
-          C7 STUDIO<span className="text-[#FFD000]">.</span>
-        </h2>
+        <div className="flex justify-center mb-6 pointer-events-none select-none">
+           <div className="w-[84px] h-[84px] rounded-full bg-[#1A1A1A] flex items-center justify-center border border-[#333333] shadow-md">
+              <span className="font-poppins font-medium text-3xl text-white tracking-widest pl-[3px]">C7<span className="text-[#FFD000]">.</span></span>
+           </div>
+        </div>
         
         {error && <div className="text-red-400 text-sm mb-4 bg-red-400/10 p-3 rounded-lg border border-red-500/20">{error}</div>}
 

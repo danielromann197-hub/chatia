@@ -48,10 +48,10 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
         </div>
 
         {/* Branding inside the sidebar */}
-        <div className="px-4 py-2 mt-2 cursor-pointer" onClick={onNewChat}>
-          <h1 className="font-anton text-2xl tracking-wide text-white uppercase flex items-baseline">
-            CALLE 7 STUDIO<span className="text-[#FFD000] ml-[2px] text-2xl leading-none">.</span>
-          </h1>
+        <div className="px-4 py-2 mt-4 flex items-center justify-center pointer-events-none select-none">
+           <div className="w-[64px] h-[64px] rounded-full bg-[#1A1A1A] flex items-center justify-center border border-[#333333]">
+              <span className="font-poppins font-medium text-2xl text-white tracking-widest pl-[2px]">C7<span className="text-[#FFD000]">.</span></span>
+           </div>
         </div>
 
         {/* History Area */}
