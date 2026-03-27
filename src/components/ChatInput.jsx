@@ -6,9 +6,11 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
   const [message, setMessage] = useState('');
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [showSubMenu, setShowSubMenu] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null); // { data: base64, mimeType }
   const { colorAcentoHex } = useSettings();
   const textareaRef = useRef(null);
   const menuRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -30,9 +32,10 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (message.trim() && !isLoading) {
-      onSendMessage(message);
+    if ((message.trim() || selectedImage) && !isLoading) {
+      onSendMessage(message || "Adjunto archivo visual", selectedImage);
       setMessage('');
+      setSelectedImage(null);
       if (textareaRef.current) {
          textareaRef.current.style.height = 'auto';
       }
@@ -46,6 +49,63 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
     }
   };
   
+  const triggerImageUpload = () => {
+     setShowAttachMenu(false);
+     setShowSubMenu(false);
+     if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const handleCreateImagePrompt = () => {
+     setShowAttachMenu(false);
+     setShowSubMenu(false);
+     setMessage("Crea una imagen detallada de: ");
+     if (textareaRef.current) textareaRef.current.focus();
+  };
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1024;
+
+        if (width > height && width > maxDim) {
+          height *= maxDim / width;
+          width = maxDim;
+        } else if (height > maxDim) {
+          width *= maxDim / height;
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Quality 0.8 to keep under 4MB limit usually
+        const base64data = canvas.toDataURL('image/jpeg', 0.8); 
+        resolve({ data: base64data, mimeType: 'image/jpeg' });
+      };
+      img.onerror = reject;
+    });
+  };
+
+  const handleFileChange = async (e) => {
+     const file = e.target.files[0];
+     if (file && file.type.startsWith('image/')) {
+        try {
+           const compressed = await compressImage(file);
+           setSelectedImage(compressed);
+        } catch (err) {
+           console.error("Error compressing image", err);
+           alert("No se pudo procesar la imagen.");
+        }
+     }
+  };
+
   const handleAction = (text) => {
      setShowAttachMenu(false);
      setShowSubMenu(false);
@@ -79,9 +139,34 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
           onSubmit={handleSubmit}
           className="relative flex flex-col w-full bg-[#2F2F2F] rounded-[24px] px-2 py-0 shadow-sm border border-transparent focus-within:border-[#444] transition-colors"
         >
+          {/* Visual Thumbnail Area */}
+          {selectedImage && (
+             <div className="w-full pl-12 pr-4 pt-3 pb-1">
+                <div className="relative inline-block group">
+                   <img src={selectedImage.data} alt="Adjunto" className="w-[60px] h-[60px] object-cover rounded-xl border border-[#444] shadow-md" />
+                   <button 
+                     type="button" 
+                     onClick={() => setSelectedImage(null)}
+                     className="absolute -top-1.5 -right-1.5 bg-[#444] hover:bg-[#ff4a4a] text-white rounded-full p-0.5 shadow transition-colors"
+                   >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                   </button>
+                </div>
+             </div>
+          )}
+
           {/* Top Row: Attachment & Textarea & Output actions */}
           <div className="flex items-end min-h-[52px] w-full pt-1 pb-1 relative">
             
+            {/* Hidden Input */}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept="image/*" 
+              onChange={handleFileChange} 
+            />
+
             {/* Attachment Button & Menu */}
             <div className="relative mb-0.5 ml-1 flex-shrink-0" ref={menuRef}>
                <button 
@@ -95,10 +180,10 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
                {/* Attachment Popover */}
                {showAttachMenu && (
                  <div className="absolute bottom-full left-0 mb-2 w-[280px] bg-[#212121] border border-[#444] rounded-2xl shadow-2xl py-2 z-[200] animate-fade-in-up">
-                    <button type="button" onClick={() => handleAction('Agregar fotos y archivos')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                    <button type="button" onClick={triggerImageUpload} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
                        <Paperclip size={18} className="text-[#ECECEC] shrink-0" strokeWidth={1.5}/> Agregar fotos y archivos
                     </button>
-                    <button type="button" onClick={() => handleAction('Crea una imagen')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                    <button type="button" onClick={handleCreateImagePrompt} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
                        <ImageIcon size={18} className="text-[#ECECEC] shrink-0" strokeWidth={1.5}/> Crea una imagen
                     </button>
                     <button type="button" onClick={() => handleAction('Pensar')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
@@ -155,7 +240,7 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
 
             {/* Right side dynamic actions */}
             <div className="flex items-center gap-1.5 flex-shrink-0 pr-1 pb-1">
-              {!message.trim() && !isLoading ? (
+              {!message.trim() && !selectedImage && !isLoading ? (
                 <>
                   <button type="button" onClick={fireVoiceInput} className="p-2 text-[#ECECEC] hover:bg-[#3F3F3F] rounded-full transition-colors flex items-center justify-center">
                     <Mic size={20} strokeWidth={1.5} />
@@ -172,7 +257,7 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
               ) : (
                 <button
                   type="submit"
-                  disabled={isLoading || !message.trim()}
+                  disabled={isLoading || (!message.trim() && !selectedImage)}
                   className="p-2 mr-1 mb-0.5 rounded-full text-white shadow-lg flex items-center justify-center transition-transform hover:scale-105 disabled:opacity-40 disabled:hover:scale-100"
                   style={{ backgroundColor: isLoading ? '#424242' : colorAcentoHex }}
                 >

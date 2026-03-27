@@ -49,7 +49,7 @@ app.get('/api/image', async (req, res) => {
 });
 
 app.post('/api/chat', async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, image } = req.body;
 
   if (!prompt) {
     return res.status(400).json({ error: 'Prompt is required' });
@@ -68,9 +68,26 @@ app.post('/api/chat', async (req, res) => {
   try {
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash',
-      systemInstruction: "Eres un asistente de IA muy útil y avanzado para C7 Studio. Si el usuario te pide generar, crear o dibujar una imagen o foto, DEBES responder con un prompt altamente descriptivo en inglés y usar exactamente este formato de imagen en Markdown apuntando a nuestro servidor proxy: `![Descripción visual detallada](/api/image?prompt=your%20english%20prompt%20here)`. Asegúrate de que las palabras en la URL estén separadas por `%20`. Tu respuesta debe consistir ÚNICAMENTE de ese Markdown si te piden una imagen explícita, sin texto adicional antes o después. Para cualquier otra petición, responde de manera natural y amable en español."
+      systemInstruction: "Eres un asistente de IA muy útil y avanzado para C7 Studio. Si el usuario te pide generar, crear o dibujar una imagen o foto, DEBES responder con un prompt altamente descriptivo en inglés y usar exactamente este formato de imagen en Markdown apuntando a nuestro servidor proxy: `![Descripción visual detallada](/api/image?prompt=your%20english%20prompt%20here)`. Asegúrate de que las palabras en la URL estén separadas por `%20`. Tu respuesta debe consistir ÚNICAMENTE de ese Markdown si te piden una imagen explícita, sin texto adicional antes o después. Para cualquier otra petición, responde de manera natural y amable en español. Si el usuario sube una imagen adjunta, tu labor es describirla, ayudar o analizarla en base a su petición."
     });
-    const result = await model.generateContentStream(prompt);
+    
+    // Construct Multi-modal payload parts
+    const parts = [prompt];
+    if (image && image.data && image.mimeType) {
+       let base64Data = image.data;
+       // Strip Canvas prefixed Data URI schemas securely
+       if (base64Data.includes(',')) {
+          base64Data = base64Data.split(',')[1];
+       }
+       parts.push({
+         inlineData: {
+           data: base64Data,
+           mimeType: image.mimeType
+         }
+       });
+    }
+
+    const result = await model.generateContentStream(parts);
 
     for await (const chunk of result.stream) {
       const chunkText = chunk.text();

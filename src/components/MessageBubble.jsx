@@ -8,8 +8,11 @@ const MessageBubble = ({ message }) => {
   if (isUser) {
     return (
       <div className="w-full flex justify-end px-4 md:px-0 py-4 md:py-5 group">
-        <div className="bg-[#2F2F2F] text-[#ECECEC] px-5 py-[14px] rounded-3xl max-w-[85%] md:max-w-3xl text-[16px] font-poppins font-normal leading-relaxed whitespace-pre-wrap">
-          {message.content}
+        <div className="bg-[#2F2F2F] flex flex-col items-end text-[#ECECEC] px-5 py-[14px] rounded-3xl max-w-[85%] md:max-w-3xl text-[16px] font-poppins font-normal leading-relaxed whitespace-pre-wrap">
+          {message.image && (
+            <img src={message.image.data} alt="Adjunto visual" className="max-w-[200px] md:max-w-[300px] rounded-2xl mb-3 object-cover shadow-sm border border-[#444]" />
+          )}
+          <span>{message.content}</span>
         </div>
       </div>
     );

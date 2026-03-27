@@ -42,12 +42,7 @@ function App() {
     return () => window.removeEventListener('toggleAIVoiceMode', handleVoiceToggle);
   }, []);
 
-  // Global settings event listener
-  useEffect(() => {
-    const handleVoiceToggle = () => setIsAIVoiceMode(prev => !prev);
-    window.addEventListener('toggleAIVoiceMode', handleVoiceToggle);
-    return () => window.removeEventListener('toggleAIVoiceMode', handleVoiceToggle);
-  }, []);
+
 
   // Base state generator
   const getEmptyChat = () => [{ id: Date.now(), title: 'Nuevo chat', messages: [], createdAt: Date.now() }];
@@ -221,8 +216,8 @@ function App() {
   const currentChat = chats.find(c => c.id === currentChatId) || chats[0];
   const messages = currentChat?.messages || [];
 
-  const handleSendMessage = async (content) => {
-    if (!content.trim() || streamActiveRef.current) return;
+  const handleSendMessage = async (content, attachedImage = null) => {
+    if (!content.trim() && !attachedImage || streamActiveRef.current) return;
 
     const activeId = currentChatId;
     const isFirstMessage = messages.length === 0;
@@ -238,7 +233,7 @@ function App() {
         return { 
           ...chat, 
           title: newTitle,
-          messages: [...chat.messages, { role: 'user', content }] 
+          messages: [...chat.messages, { role: 'user', content, image: attachedImage }] 
         };
       }
       return chat;
@@ -256,7 +251,7 @@ function App() {
 
     let completeResponse = '';
     try {
-      await generateAIStream(content, (currentText) => {
+      await generateAIStream(content, attachedImage, (currentText) => {
         completeResponse = currentText;
         setIsLoading(false);
         setChats(prev => prev.map(chat => {
