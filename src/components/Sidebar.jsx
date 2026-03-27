@@ -1,7 +1,8 @@
 import React from 'react';
-import { Plus, MessageSquare, PanelLeftClose, Trash2 } from 'lucide-react';
+import { Plus, MessageSquare, PanelLeftClose, Trash2, LogOut } from 'lucide-react';
+import { logout } from '../firebase';
 
-const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat }) => {
+const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat, user, onShowLogin }) => {
   return (
     <>
       {/* Mobile Overlay */}
@@ -14,13 +15,12 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
 
       {/* Sidebar - ChatGPT Style #171717 */}
       <div 
-        className={`fixed md:relative inset-y-0 left-0 transform ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 transition-transform duration-300 ease-in-out z-50 w-[260px] bg-[#171717] flex flex-col h-full`}
+        className={`fixed md:relative inset-y-0 left-0 transform transition-all duration-300 ease-in-out z-50 flex flex-col h-full bg-[#171717] overflow-hidden ${
+          isOpen ? 'translate-x-0 w-[260px]' : '-translate-x-full md:translate-x-0 md:w-0 w-[260px]'
+        }`}
       >
         {/* Header Options */}
         <div className="p-3 flex items-center justify-between">
-          {/* Collapse button typical in ChatGPT top left */}
           <button 
             className="md:flex hidden text-[#B4B4B4] hover:text-white transition-colors p-2 rounded-lg hover:bg-[#202123]"
             onClick={() => setIsOpen(false)}
@@ -70,15 +70,8 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
                 >
                   <div className="flex items-center gap-3 overflow-hidden">
                     <MessageSquare size={16} className={isActive ? 'text-white' : 'text-[#8E8E8E] group-hover:text-[#ECECEC] transition-colors'} />
-                    <span className="truncate text-[14px] font-poppins font-light relative leading-tight pt-0.5">
+                    <span className="truncate text-[14px] font-poppins font-light leading-tight pt-0.5 w-[140px]">
                       {chat.title}
-                      {/* Fade out effect string overflow */}
-                      {!isActive && (
-                         <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-[#171717] group-hover:from-[#202123] to-transparent pointer-events-none" />
-                      )}
-                      {isActive && (
-                         <div className="absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-[#212121] to-transparent pointer-events-none" />
-                      )}
                     </span>
                   </div>
                   
@@ -94,6 +87,25 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
               );
             })}
           </div>
+        </div>
+
+        {/* User Profile Area at the bottom of Sidebar */}
+        <div className="p-3 mt-auto border-t border-[#333333]">
+          {user ? (
+            <div className="flex items-center justify-between w-full px-3 py-[6px] bg-[#212121] rounded-lg border border-[#333]">
+               <span className="truncate pr-2 font-poppins text-xs text-[#ECECEC]" title={user.email}>{user.email}</span>
+               <button onClick={logout} className="text-[#8E8E8E] hover:text-[#ff4a4a] transition-colors p-1" title="Cerrar sesión">
+                 <LogOut size={16} />
+               </button>
+            </div>
+          ) : (
+            <button 
+              onClick={onShowLogin} 
+              className="w-full flex items-center justify-center bg-[#FFD000] text-black font-semibold py-[10px] rounded-lg hover:bg-[#E6BC00] transition-colors font-poppins text-sm shadow-sm"
+            >
+              Identificarse / Guardar
+            </button>
+          )}
         </div>
       </div>
     </>
