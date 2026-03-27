@@ -68,7 +68,7 @@ function App() {
 
           if (userDoc.exists()) {
              const data = userDoc.data();
-             if (!data.age || !currentUser.displayName) {
+             if (!data.age || (!currentUser.displayName && !data.displayName)) {
                 setShowOnboarding(true);
              }
           } else {

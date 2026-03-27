@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, PanelLeftClose, Trash2, LogOut, MoreHorizontal, Share, Users, Edit2, Pin, PinOff, Archive, Image as ImageIcon, Search, Folder, Sparkles, Wand2, HelpCircle, Edit3, Plus, Settings } from 'lucide-react';
+import { MessageSquare, PanelLeftClose, Trash2, LogOut, MoreHorizontal, Share, Users, User, Edit2, Pin, PinOff, Archive, Image as ImageIcon, Search, Folder, Sparkles, Wand2, HelpCircle, Edit3, Plus, Settings } from 'lucide-react';
 import { logout } from '../firebase';
 
 const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat, onRenameChat, onTogglePinChat, onToggleArchiveChat, onShowImageGallery, onShowArchivedChats, user, onShowLogin, onShowSettings, onShowUpgradePlan, onShowSearch }) => {
@@ -199,13 +199,13 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
 
                   <div className="h-px bg-[#444] my-1 mx-3"></div>
 
-                  <button className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
+                  <button onClick={() => alert('Función de múltiples cuentas próximamente.')} className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
                      <Plus size={16} className="text-[#A0A0A0]"/> Agregar otra cuenta
                   </button>
                   <button onClick={(e) => enforceAuth(e, () => { setShowProfileMenu(false); onShowUpgradePlan(); })} className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
                      <Sparkles size={16} className="text-[#A0A0A0]"/> Mejorar el plan
                   </button>
-                  <button className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
+                  <button onClick={() => { setShowProfileMenu(false); onShowSettings(); }} className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
                      <Wand2 size={16} className="text-[#A0A0A0]"/> Personalización
                   </button>
                   <button onClick={() => { setShowProfileMenu(false); onShowSettings(); }} className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
@@ -217,7 +217,7 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
 
                   <div className="h-px bg-[#444] my-1 mx-3"></div>
 
-                  <button className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
+                  <button onClick={() => alert('Centro de Ayuda C7 Studio próximamente.')} className="w-full text-left px-3 py-2.5 text-[13px] text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
                      <HelpCircle size={16} className="text-[#A0A0A0]"/> Ayuda
                   </button>
                   <button onClick={() => { setShowProfileMenu(false); logout(); }} className="w-full text-left px-3 py-2.5 text-[13px] text-[#ff4a4a] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">
@@ -251,7 +251,7 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
                      Mejorar el plan
                    </span>
                  </div>
-              </div>
+              </button>
             </>
           ) : (
             <button 
