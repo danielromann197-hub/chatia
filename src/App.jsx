@@ -9,6 +9,13 @@ import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
+const withTimeout = (promise, ms) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms))
+  ]);
+};
+
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,12 +41,15 @@ function App() {
 
   // Authentication Listener & Persistence Router
   useEffect(() => {
+    // Failsafe to ensure the app always loads even if Firebase hangs
+    const globalTimeout = setTimeout(() => setIsAuthChecking(false), 6000);
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
       if (currentUser) {
         try {
-          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          const userDoc = await withTimeout(getDoc(doc(db, 'users', currentUser.uid)), 5000);
           let cloudChats = [];
           
           if (userDoc.exists() && userDoc.data().chats) {
@@ -89,9 +99,13 @@ function App() {
         setChats(getEmptyChat());
         setCurrentChatId(getEmptyChat()[0].id);
       }
+      clearTimeout(globalTimeout);
       setIsAuthChecking(false);
     });
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(globalTimeout);
+      unsubscribe();
+    };
   }, []);
 
   // Sync to Cloud and LocalStorage
