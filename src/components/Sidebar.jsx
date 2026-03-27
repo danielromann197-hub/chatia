@@ -2,16 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, MessageSquare, PanelLeftClose, Trash2, LogOut, MoreHorizontal, Share, Users, Edit2, Pin, PinOff, Archive, Image as ImageIcon } from 'lucide-react';
 import { logout } from '../firebase';
 
-const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat, onRenameChat, onTogglePinChat, onToggleArchiveChat, onShowImageGallery, onShowArchivedChats, user, onShowLogin }) => {
+const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewChat, onDeleteChat, onRenameChat, onTogglePinChat, onToggleArchiveChat, onShowImageGallery, onShowArchivedChats, user, onShowLogin, onShowSettings }) => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [editingChatId, setEditingChatId] = useState(null);
   const [editTitle, setEditTitle] = useState('');
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenuId(null);
+      }
+      // Si hacen clic fuera del menú de perfil, cerrarlo
+      if (!event.target.closest('.profile-menu-container')) {
+        setShowProfileMenu(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -23,8 +28,17 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
   const pinnedChats = activeChats.filter(c => c.pinned);
   const recentChats = activeChats.filter(c => !c.pinned);
 
+  const enforceAuth = (e, callback) => {
+    if (e) e.stopPropagation();
+    if (!user) {
+      if (onShowLogin) onShowLogin();
+      setOpenMenuId(null);
+      return;
+    }
+    callback();
+  };
+
   const startRename = (chat, e) => {
-    e.stopPropagation();
     setEditingChatId(chat.id);
     setEditTitle(chat.title);
     setOpenMenuId(null);
@@ -37,14 +51,12 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
     setEditingChatId(null);
   };
 
-  const handleShare = (e) => {
-    e.stopPropagation();
+  const handleShare = () => {
     alert("Enlace copiado al portapapeles.");
     setOpenMenuId(null);
   };
 
-  const handleGroup = (e) => {
-    e.stopPropagation();
+  const handleGroup = () => {
     alert("Próximamente: Funcionalidad de chats grupales.");
     setOpenMenuId(null);
   };
@@ -97,12 +109,12 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
                     {/* Dropdown Menu */}
                     {openMenuId === chat.id && (
                       <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1 w-56 bg-[#2F2F2F] border border-[#444] rounded-xl shadow-2xl py-1.5 z-[100] animate-fade-in-up">
-                        <button onClick={handleShare} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Share size={15}/> Compartir</button>
-                        <button onClick={handleGroup} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Users size={15}/> Iniciar un chat grupal</button>
-                        <button onClick={(e) => startRename(chat, e)} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Edit2 size={15}/> Cambiar el nombre</button>
-                        <button onClick={(e) => { e.stopPropagation(); onTogglePinChat(chat.id); setOpenMenuId(null); }} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins">{chat.pinned ? <PinOff size={15}/> : <Pin size={15}/>} {chat.pinned ? 'Desanclar chat' : 'Anclar chat'}</button>
-                        <button onClick={(e) => { e.stopPropagation(); onToggleArchiveChat(chat.id); setOpenMenuId(null); }} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Archive size={15}/> Archivar</button>
-                        <button onClick={(e) => { e.stopPropagation(); onDeleteChat(chat.id, e); setOpenMenuId(null); }} className="w-full text-left px-3 py-2.5 text-sm text-[#ff4a4a] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Trash2 size={15}/> Eliminar</button>
+                        <button onClick={(e) => enforceAuth(e, handleShare)} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Share size={15}/> Compartir</button>
+                        <button onClick={(e) => enforceAuth(e, handleGroup)} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Users size={15}/> Iniciar un chat grupal</button>
+                        <button onClick={(e) => enforceAuth(e, () => startRename(chat, e))} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Edit2 size={15}/> Cambiar el nombre</button>
+                        <button onClick={(e) => enforceAuth(e, () => { onTogglePinChat(chat.id); setOpenMenuId(null); })} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins">{chat.pinned ? <PinOff size={15}/> : <Pin size={15}/>} {chat.pinned ? 'Desanclar chat' : 'Anclar chat'}</button>
+                        <button onClick={(e) => enforceAuth(e, () => { onToggleArchiveChat(chat.id); setOpenMenuId(null); })} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Archive size={15}/> Archivar</button>
+                        <button onClick={(e) => enforceAuth(e, () => { onDeleteChat(chat.id, e); setOpenMenuId(null); })} className="w-full text-left px-3 py-2.5 text-sm text-[#ff4a4a] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins"><Trash2 size={15}/> Eliminar</button>
                       </div>
                     )}
                   </div>
@@ -168,11 +180,11 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
 
         {/* Generales / Extras Area */}
         <div className="px-3 mt-5 mb-2 space-y-0.5">
-          <button onClick={onShowImageGallery} className="w-full text-left px-3 py-2.5 rounded-lg text-[#ECECEC] hover:bg-[#202123] flex items-center gap-3 transition-colors group cursor-pointer">
+          <button onClick={(e) => enforceAuth(e, onShowImageGallery)} className="w-full text-left px-3 py-2.5 rounded-lg text-[#ECECEC] hover:bg-[#202123] flex items-center gap-3 transition-colors group cursor-pointer">
             <ImageIcon size={16} className="text-[#8E8E8E] group-hover:text-white transition-colors" />
             <span className="text-[14px] font-poppins font-light">Galería de Imágenes</span>
           </button>
-          <button onClick={onShowArchivedChats} className="w-full text-left px-3 py-2.5 rounded-lg text-[#ECECEC] hover:bg-[#202123] flex items-center gap-3 transition-colors group cursor-pointer">
+          <button onClick={(e) => enforceAuth(e, onShowArchivedChats)} className="w-full text-left px-3 py-2.5 rounded-lg text-[#ECECEC] hover:bg-[#202123] flex items-center gap-3 transition-colors group cursor-pointer">
             <Archive size={16} className="text-[#8E8E8E] group-hover:text-white transition-colors" />
             <span className="text-[14px] font-poppins font-light">Chats Archivados</span>
           </button>
@@ -185,18 +197,38 @@ const Sidebar = ({ isOpen, setIsOpen, chats, currentChatId, onSelectChat, onNewC
         </div>
 
         {/* User Profile Area at the bottom of Sidebar */}
-        <div className="p-3 mt-auto border-t border-[#333333] bg-[#171717]">
+        <div className="p-3 mt-auto border-t border-[#333333] bg-[#171717] profile-menu-container relative">
           {user ? (
-            <div className="flex items-center justify-between w-full px-3 py-[8px] bg-[#212121] rounded-lg border border-[#333]">
-               <span className="truncate pr-2 font-poppins text-xs text-[#ECECEC]" title={user.email}>{user.email}</span>
-               <button onClick={logout} className="text-[#8E8E8E] hover:text-[#ff4a4a] transition-colors p-1" title="Cerrar sesión">
-                 <LogOut size={16} />
-               </button>
-            </div>
+            <>
+              {showProfileMenu && (
+                <div className="absolute bottom-full left-3 w-[calc(100%-24px)] mb-1 bg-[#2F2F2F] border border-[#444] rounded-xl shadow-2xl py-1.5 z-[100] animate-fade-in-up">
+                  <button onClick={() => { setShowProfileMenu(false); onShowSettings(); }} className="w-full text-left px-3 py-2.5 text-sm text-[#ECECEC] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">Configuración</button>
+                  <div className="h-px bg-[#444] my-1"></div>
+                  <button onClick={() => { setShowProfileMenu(false); logout(); }} className="w-full text-left px-3 py-2.5 text-sm text-[#ff4a4a] hover:bg-[#3F3F3F] flex items-center gap-3 font-poppins transition-colors">Cerrar sesión</button>
+                </div>
+              )}
+              <div 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center justify-between w-full px-3 py-2.5 hover:bg-[#212121] rounded-lg transition-colors cursor-pointer group"
+              >
+                 <div className="flex items-center gap-3 overflow-hidden">
+                    <img 
+                      src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.displayName || 'U')}`} 
+                      alt="Avatar" 
+                      className="w-8 h-8 rounded-full bg-black object-cover flex-shrink-0" 
+                    />
+                    <div className="flex flex-col overflow-hidden">
+                       <span className="truncate font-poppins font-medium text-[13px] text-[#ECECEC] leading-none mb-1">{user.displayName || 'Usuario C7'}</span>
+                       <span className="truncate font-poppins text-[10px] text-[#8E8E8E] leading-none">{user.email}</span>
+                    </div>
+                 </div>
+                 <MoreHorizontal size={16} className="text-[#8E8E8E] group-hover:text-white transition-colors flex-shrink-0" />
+              </div>
+            </>
           ) : (
             <button 
               onClick={onShowLogin} 
-              className="w-full flex items-center justify-center bg-[#FFD000] text-black font-semibold py-[10px] rounded-lg hover:bg-[#E6BC00] transition-colors font-poppins text-sm shadow-sm"
+              className="w-full flex items-center justify-center bg-[#FFD000] text-black font-semibold py-[10px] rounded-xl hover:bg-[#E6BC00] transition-colors font-poppins text-sm shadow-sm"
             >
               Identificarse / Guardar
             </button>

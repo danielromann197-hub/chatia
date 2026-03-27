@@ -4,6 +4,8 @@ import ChatArea from './components/ChatArea';
 import LoginModal from './components/LoginModal';
 import ImageGalleryModal from './components/ImageGalleryModal';
 import ArchivedChatsModal from './components/ArchivedChatsModal';
+import SettingsModal from './components/SettingsModal';
+import OnboardingModal from './components/OnboardingModal';
 import { generateAIStream } from './gemini';
 import { auth, db } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -21,12 +23,13 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const streamActiveRef = useRef(false);
 
-  // Auth State
   const [user, setUser] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [showArchivedChats, setShowArchivedChats] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Base state generator
   const getEmptyChat = () => [{ id: Date.now(), title: 'Nuevo chat', messages: [], createdAt: Date.now() }];
@@ -57,6 +60,15 @@ function App() {
           } else {
             const saved = localStorage.getItem(`c7_chatHistory_${currentUser.uid}`);
             cloudChats = saved && saved !== "null" ? JSON.parse(saved) : [];
+          }
+
+          if (userDoc.exists()) {
+             const data = userDoc.data();
+             if (!data.age || !currentUser.displayName) {
+                setShowOnboarding(true);
+             }
+          } else {
+             setShowOnboarding(true);
           }
 
           if (!Array.isArray(cloudChats)) cloudChats = [];
@@ -179,6 +191,15 @@ function App() {
     }
   };
 
+  const handleClearAllChats = () => {
+    if (window.confirm("¿Estás completamente seguro de que quieres eliminar todos los chats de forma permanente?")) {
+       const fallback = getEmptyChat();
+       setChats(fallback);
+       setCurrentChatId(fallback[0].id);
+       setShowSettings(false);
+    }
+  };
+
   const currentChat = chats.find(c => c.id === currentChatId) || chats[0];
   const messages = currentChat?.messages || [];
 
@@ -255,6 +276,17 @@ function App() {
 
   return (
     <div className="flex bg-[#212121] h-[100dvh] font-poppins text-white overflow-hidden selection:bg-[#FFD000] selection:text-black">
+      <OnboardingModal 
+        isOpen={showOnboarding} 
+        onClose={() => setShowOnboarding(false)} 
+        user={user} 
+      />
+      <SettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        user={user} 
+        onClearAllChats={handleClearAllChats} 
+      />
       <ImageGalleryModal 
         isOpen={showImageGallery} 
         onClose={() => setShowImageGallery(false)} 
@@ -282,6 +314,7 @@ function App() {
         onShowArchivedChats={() => setShowArchivedChats(true)}
         user={user}
         onShowLogin={() => setShowLogin(true)}
+        onShowSettings={() => setShowSettings(true)}
       />
       <div className="flex-1 flex flex-col relative w-full h-full bg-[#212121]">
         <ChatArea 
