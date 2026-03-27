@@ -1,9 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Plus, Mic, AudioLines, Paperclip, Image as ImageIcon, Lightbulb, Telescope, MoreHorizontal, Globe, BookOpen, PenTool, FileText } from 'lucide-react';
+import { useSettings } from '../hooks/useSettings';
 
 const ChatInput = ({ onSendMessage, isLoading }) => {
   const [message, setMessage] = useState('');
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showSubMenu, setShowSubMenu] = useState(false);
+  const { colorAcentoHex } = useSettings();
   const textareaRef = useRef(null);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -12,8 +17,19 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
     }
   }, [message]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowAttachMenu(false);
+        setShowSubMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleSubmit = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (message.trim() && !isLoading) {
       onSendMessage(message);
       setMessage('');
@@ -29,41 +45,151 @@ const ChatInput = ({ onSendMessage, isLoading }) => {
       handleSubmit(e);
     }
   };
+  
+  const handleAction = (text) => {
+     setShowAttachMenu(false);
+     setShowSubMenu(false);
+     alert(`Función en desarrollo: ${text}`);
+  };
+
+  const fireVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return alert("Dictado por voz nativo no soportado en este navegador de escritorio.");
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-MX';
+    recognition.start();
+    
+    recognition.onstart = () => setMessage(prev => prev + " [Escuchando...]");
+    recognition.onresult = (e) => {
+      setMessage(prev => prev.replace(" [Escuchando...]", "") + (prev ? " " : "") + e.results[0][0].transcript);
+    };
+    recognition.onerror = () => setMessage(prev => prev.replace(" [Escuchando...]", ""));
+    recognition.onend = () => setMessage(prev => prev.replace(" [Escuchando...]", ""));
+  };
+
+  const fireVoiceMode = () => {
+     window.dispatchEvent(new Event('toggleAIVoiceMode'));
+  };
 
   return (
-    <div className="w-full flex justify-center px-4 pb-2 md:pb-6 relative z-10">
+    <div className="w-full flex justify-center px-4 md:px-0 pb-2 md:pb-6 relative z-10 font-poppins">
       <div className="w-full max-w-3xl flex flex-col items-center">
+        
         <form 
           onSubmit={handleSubmit}
-          className="relative flex items-end bg-[#2F2F2F] rounded-3xl px-2 py-2 shadow-sm w-full"
+          className="relative flex flex-col w-full bg-[#2F2F2F] rounded-[24px] px-2 py-0 shadow-sm border border-transparent focus-within:border-[#444] transition-colors"
         >
-          <div className="flex-1 flex items-center min-h-[40px]">
-             <textarea
+          {/* Top Row: Attachment & Textarea & Output actions */}
+          <div className="flex items-end min-h-[52px] w-full pt-1 pb-1 relative">
+            
+            {/* Attachment Button & Menu */}
+            <div className="relative mb-0.5 ml-1 flex-shrink-0" ref={menuRef}>
+               <button 
+                 type="button"
+                 onClick={() => setShowAttachMenu(!showAttachMenu)}
+                 className="p-2 text-[#ECECEC] hover:bg-[#3F3F3F] rounded-full transition-colors flex items-center justify-center focus:outline-none"
+               >
+                 <Plus size={22} className={showAttachMenu ? "rotate-45 transition-transform" : "transition-transform"} />
+               </button>
+
+               {/* Attachment Popover */}
+               {showAttachMenu && (
+                 <div className="absolute bottom-full left-0 mb-2 w-[280px] bg-[#212121] border border-[#444] rounded-2xl shadow-2xl py-2 z-[200] animate-fade-in-up">
+                    <button type="button" onClick={() => handleAction('Agregar fotos y archivos')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                       <Paperclip size={18} className="text-[#ECECEC] shrink-0" strokeWidth={1.5}/> Agregar fotos y archivos
+                    </button>
+                    <button type="button" onClick={() => handleAction('Crea una imagen')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                       <ImageIcon size={18} className="text-[#ECECEC] shrink-0" strokeWidth={1.5}/> Crea una imagen
+                    </button>
+                    <button type="button" onClick={() => handleAction('Pensar')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                       <Lightbulb size={18} className="text-[#ECECEC] shrink-0" strokeWidth={1.5}/> Pensar
+                    </button>
+                    <button type="button" onClick={() => handleAction('Investigar a fondo')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                       <Telescope size={18} className="text-[#ECECEC] shrink-0" strokeWidth={1.5}/> Investigar a fondo
+                    </button>
+                    
+                    <div className="h-px bg-[#444] my-1 mx-3"></div>
+
+                    <div 
+                      className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center justify-between transition-colors cursor-pointer group"
+                      onMouseEnter={() => setShowSubMenu(true)}
+                      onClick={() => setShowSubMenu(!showSubMenu)}
+                    >
+                       <div className="flex items-center gap-3">
+                          <MoreHorizontal size={18} className="text-[#ECECEC]" strokeWidth={1.5}/> Más
+                       </div>
+                    </div>
+
+                    {/* Más Submenu */}
+                    {showSubMenu && (
+                      <div className="absolute bottom-0 left-full ml-1 w-56 bg-[#212121] border border-[#444] rounded-2xl shadow-2xl py-2 z-[210] animate-fade-in-up">
+                        <button type="button" onClick={() => handleAction('Busca en la web')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                           <Globe size={18} className="text-[#ECECEC]" strokeWidth={1.5}/> Busca en la web
+                        </button>
+                        <button type="button" onClick={() => handleAction('Estudia y aprende')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                           <BookOpen size={18} className="text-[#ECECEC]" strokeWidth={1.5}/> Estudia y aprende
+                        </button>
+                        <button type="button" onClick={() => handleAction('Canvas')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                           <PenTool size={18} className="text-[#ECECEC]" strokeWidth={1.5}/> Canvas
+                        </button>
+                        <button type="button" onClick={() => handleAction('Cuestionarios')} className="w-full text-left px-4 py-3 text-[14px] text-[#ECECEC] hover:bg-[#2F2F2F] flex items-center gap-3 transition-colors">
+                           <FileText size={18} className="text-[#ECECEC]" strokeWidth={1.5}/> Cuestionarios
+                        </button>
+                      </div>
+                    )}
+                 </div>
+               )}
+            </div>
+
+            <textarea
                ref={textareaRef}
                value={message}
                onChange={(e) => setMessage(e.target.value)}
                onKeyDown={handleKeyDown}
-               placeholder="Mensaje en C7 AI..."
-               className="w-full bg-transparent text-[#ECECEC] placeholder-[#8E8E8E] focus:outline-none resize-none px-4 py-[10px] font-poppins text-[16px] scrollbar-hide align-middle"
+               placeholder="Pregunta lo que quieras"
+               className="flex-1 bg-transparent text-[#ECECEC] placeholder-[#A0A0A0] focus:outline-none resize-none px-3 py-3.5 font-poppins text-[15px] scrollbar-hide align-middle self-center pt-3"
                rows={1}
-               style={{ maxHeight: '200px', display: 'block' }}
+               style={{ maxHeight: '200px' }}
                disabled={isLoading}
-             />
+            />
+
+            {/* Right side dynamic actions */}
+            <div className="flex items-center gap-1.5 flex-shrink-0 pr-1 pb-1">
+              {!message.trim() && !isLoading ? (
+                <>
+                  <button type="button" onClick={fireVoiceInput} className="p-2 text-[#ECECEC] hover:bg-[#3F3F3F] rounded-full transition-colors flex items-center justify-center">
+                    <Mic size={20} strokeWidth={1.5} />
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={fireVoiceMode}
+                    className="p-2.5 rounded-full text-white shadow-lg flex items-center justify-center transition-transform hover:scale-105 ml-1"
+                    style={{ backgroundColor: colorAcentoHex }}
+                  >
+                    <AudioLines size={18} strokeWidth={1.5} />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isLoading || !message.trim()}
+                  className="p-2 mr-1 mb-0.5 rounded-full text-white shadow-lg flex items-center justify-center transition-transform hover:scale-105 disabled:opacity-40 disabled:hover:scale-100"
+                  style={{ backgroundColor: isLoading ? '#424242' : colorAcentoHex }}
+                >
+                  <ArrowUp size={20} strokeWidth={2.5} />
+                </button>
+              )}
+            </div>
+
           </div>
-          <button
-            type="submit"
-            disabled={!message.trim() || isLoading}
-            className="flex-shrink-0 m-[2px] h-[34px] w-[34px] rounded-full bg-[#ECECEC] flex items-center justify-center transition-all duration-200 text-black shadow-sm disabled:opacity-40 disabled:bg-[#424242] disabled:text-[#8E8E8E] focus:outline-none"
-            style={ (!message.trim() || isLoading) ? {} : { backgroundColor: '#FFD000', color: 'black' } }
-          >
-            <ArrowUp size={18} strokeWidth={3} />
-          </button>
         </form>
+
         <div className="text-center mt-2 mb-1">
-          <p className="text-[11px] text-[#A3A3A3] font-poppins">
-            C7 AI puede cometer errores. Considera verificar la información importante.
+          <p className="text-[11px] text-[#A0A0A0] font-poppins">
+            ChatGPT puede cometer errores. Comprueba la información importante. Consulta Preferencias de cookies.
           </p>
         </div>
+
       </div>
     </div>
   );

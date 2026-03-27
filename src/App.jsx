@@ -34,6 +34,20 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showUpgradePlan, setShowUpgradePlan] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
+  const [isAIVoiceMode, setIsAIVoiceMode] = useState(false);
+
+  useEffect(() => {
+    const handleVoiceToggle = () => setIsAIVoiceMode(prev => !prev);
+    window.addEventListener('toggleAIVoiceMode', handleVoiceToggle);
+    return () => window.removeEventListener('toggleAIVoiceMode', handleVoiceToggle);
+  }, []);
+
+  // Global settings event listener
+  useEffect(() => {
+    const handleVoiceToggle = () => setIsAIVoiceMode(prev => !prev);
+    window.addEventListener('toggleAIVoiceMode', handleVoiceToggle);
+    return () => window.removeEventListener('toggleAIVoiceMode', handleVoiceToggle);
+  }, []);
 
   // Base state generator
   const getEmptyChat = () => [{ id: Date.now(), title: 'Nuevo chat', messages: [], createdAt: Date.now() }];
@@ -240,8 +254,10 @@ function App() {
       return chat;
     }));
 
+    let completeResponse = '';
     try {
       await generateAIStream(content, (currentText) => {
+        completeResponse = currentText;
         setIsLoading(false);
         setChats(prev => prev.map(chat => {
           if (chat.id === activeId) {
@@ -261,6 +277,17 @@ function App() {
     } finally {
       setIsLoading(false);
       streamActiveRef.current = false;
+      
+      if (isAIVoiceMode && completeResponse) {
+         try {
+           const cleanText = completeResponse.replace(/[*#`_\n]/g, ' ').trim();
+           const utterance = new SpeechSynthesisUtterance(cleanText);
+           utterance.lang = 'es-MX';
+           window.speechSynthesis.speak(utterance);
+         } catch (e) {
+           console.error("SpeechSynthesis Failed:", e);
+         }
+      }
     }
   };
 

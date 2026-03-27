@@ -51,12 +51,35 @@ const SettingsModal = ({ isOpen, onClose, user, onClearAllChats }) => {
   const [showMfaAlert, setShowMfaAlert] = useState(true);
 
   // Deep UI States for General Tab
-  const [aspecto, setAspecto] = useState('Sistema');
-  const [colorAcento, setColorAcento] = useState('Predeterminada');
-  const [idioma, setIdioma] = useState('Automático');
-  const [idiomaHablado, setIdiomaHablado] = useState('Automático');
-  const [voz, setVoz] = useState('Ember');
-  const [separarVoz, setSepararVoz] = useState(false);
+  const initSet = JSON.parse(localStorage.getItem('c7_settings')) || {};
+  const [aspecto, setAspecto] = useState(initSet.aspecto || 'Sistema');
+  const [colorAcento, setColorAcento] = useState(initSet.colorAcento || 'Rosa'); // Base default as requested
+  const [idioma, setIdioma] = useState(initSet.idioma || 'Automático');
+  const [idiomaHablado, setIdiomaHablado] = useState(initSet.idiomaHablado || 'Automático');
+  const [voz, setVoz] = useState(initSet.voz || 'Ember');
+  const [separarVoz, setSepararVoz] = useState(initSet.separarVoz || false);
+
+  /* Data sets initialized early for state bindings */
+  const colorList = [
+    {value:'Predeterminada', label:'Predeterminada', color:'#8E8E8E'}, 
+    {value:'Azul', label:'Azul', color:'#2b8aff'}, 
+    {value:'Verde', label:'Verde', color:'#10a37f'}, 
+    {value:'Amarillo', label:'Amarillo', color:'#f5b502'}, 
+    {value:'Rosa', label:'Rosa', color:'#e91e63'}, 
+    {value:'Naranja', label:'Naranja', color:'#ff9800'}
+  ];
+
+  useEffect(() => {
+    const st = {
+      aspecto,
+      colorAcento,
+      colorAcentoHex: colorList.find(c => c.value === colorAcento)?.color || '#e91e63',
+      idioma, idiomaHablado, voz, separarVoz
+    };
+    localStorage.setItem('c7_settings', JSON.stringify(st));
+    window.dispatchEvent(new Event('settingsUpdated'));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aspecto, colorAcento, idioma, idiomaHablado, voz, separarVoz]);
 
   // Deep UI States for Notificaciones Tab
   const [notifResp, setNotifResp] = useState('Push');
@@ -128,14 +151,6 @@ const SettingsModal = ({ isOpen, onClose, user, onClearAllChats }) => {
 
   /* Data sets */
   const aspectoList = [{value:'Sistema', label:'Sistema'}, {value:'Oscuro', label:'Oscuro'}, {value:'Claro', label:'Claro'}];
-  const colorList = [
-    {value:'Predeterminada', label:'Predeterminada', color:'#8E8E8E'}, 
-    {value:'Azul', label:'Azul', color:'#2b8aff'}, 
-    {value:'Verde', label:'Verde', color:'#10a37f'}, 
-    {value:'Amarillo', label:'Amarillo', color:'#f5b502'}, 
-    {value:'Rosa', label:'Rosa', color:'#e91e63'}, 
-    {value:'Naranja', label:'Naranja', color:'#ff9800'}
-  ];
   const colorRenderer = (opt) => (
     <div className="flex items-center gap-2">
       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: opt.color }}></div>
