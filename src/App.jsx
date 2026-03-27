@@ -23,27 +23,46 @@ function App() {
   const [chats, setChats] = useState(getEmptyChat());
   const [currentChatId, setCurrentChatId] = useState(chats[0].id);
 
+  const chatsRef = useRef(chats);
+  useEffect(() => {
+    chatsRef.current = chats;
+  }, [chats]);
+
   // Authentication Listener & Persistence Router
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
       if (currentUser) {
-        // Load from Firestore first
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          let cloudChats = [];
+          
           if (userDoc.exists() && userDoc.data().chats) {
-            const cloudChats = userDoc.data().chats;
-            setChats(cloudChats);
-            setCurrentChatId(cloudChats[0].id);
-            localStorage.setItem(`c7_chatHistory_${currentUser.uid}`, JSON.stringify(cloudChats));
+            cloudChats = userDoc.data().chats;
           } else {
-            // Fallback to localStorage migration or empty
             const saved = localStorage.getItem(`c7_chatHistory_${currentUser.uid}`);
-            const defaultChats = saved ? JSON.parse(saved) : getEmptyChat();
-            setChats(defaultChats);
-            setCurrentChatId(defaultChats[0].id);
-            await setDoc(doc(db, 'users', currentUser.uid), { chats: defaultChats });
+            cloudChats = saved ? JSON.parse(saved) : [];
+          }
+
+          const guestActiveChats = chatsRef.current.filter(c => c.messages.length > 0);
+          let mergedChats = [];
+
+          if (cloudChats.length === 0) {
+            mergedChats = guestActiveChats.length > 0 ? guestActiveChats : getEmptyChat();
+          } else {
+            const existingIds = new Set(cloudChats.map(c => c.id));
+            const newGuestChats = guestActiveChats.filter(c => !existingIds.has(c.id));
+            mergedChats = [...newGuestChats, ...cloudChats];
+          }
+
+          setChats(mergedChats);
+          setCurrentChatId(mergedChats[0].id);
+          localStorage.setItem(`c7_chatHistory_${currentUser.uid}`, JSON.stringify(mergedChats));
+          
+          // Force an immediate cloud save if we just migrated guest chats over
+          if (guestActiveChats.length > 0) {
+            await setDoc(doc(db, 'users', currentUser.uid), { chats: mergedChats }).catch(e => console.error(e));
           }
         } catch (error) {
            console.error("Error loading chats from Firestore:", error);
